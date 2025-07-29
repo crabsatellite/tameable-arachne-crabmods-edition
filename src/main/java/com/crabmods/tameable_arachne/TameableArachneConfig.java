@@ -97,6 +97,27 @@ public class TameableArachneConfig {
             .comment("Auto heal interval in ticks")
             .defineInRange("autoHealInterval", 50, 10, 200);
 
+    // Protection settings
+    private static final ForgeConfigSpec.IntValue FIRE_PROTECTION_LIMIT = BUILDER
+            .comment("Fire protection limit")
+            .defineInRange("fireProtectionLimit", 4, 1, 10);
+
+    private static final ForgeConfigSpec.IntValue FALL_PROTECTION_LIMIT = BUILDER
+            .comment("Fall protection limit")
+            .defineInRange("fallProtectionLimit", 4, 1, 10);
+
+    private static final ForgeConfigSpec.IntValue BLAST_PROTECTION_LIMIT = BUILDER
+            .comment("Blast protection limit")
+            .defineInRange("blastProtectionLimit", 4, 1, 10);
+
+    private static final ForgeConfigSpec.IntValue PROJECTILE_PROTECTION_LIMIT = BUILDER
+            .comment("Projectile protection limit")
+            .defineInRange("projectileProtectionLimit", 4, 1, 10);
+
+    private static final ForgeConfigSpec.IntValue PROTECTION_LIMIT = BUILDER
+            .comment("General protection limit")
+            .defineInRange("protectionLimit", 4, 1, 10);
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     // Public getters for config values
@@ -125,6 +146,13 @@ public class TameableArachneConfig {
     public static int autoHealValue;
     public static int autoHealInterval;
 
+    // Protection limits
+    public static int fireProtectionLimit;
+    public static int fallProtectionLimit;
+    public static int blastProtectionLimit;
+    public static int projectileProtectionLimit;
+    public static int protectionLimit;
+
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
         arachneSpawnEnabled = ARACHNE_SPAWN_ENABLED.get();
@@ -151,6 +179,12 @@ public class TameableArachneConfig {
         autoHeal = AUTO_HEAL.get();
         autoHealValue = AUTO_HEAL_VALUE.get();
         autoHealInterval = AUTO_HEAL_INTERVAL.get();
+
+        // Protection limits
+        fireProtectionLimit = FIRE_PROTECTION_LIMIT.get();
+        fallProtectionLimit = FALL_PROTECTION_LIMIT.get();
+        blastProtectionLimit = BLAST_PROTECTION_LIMIT.get();
+        projectileProtectionLimit = PROJECTILE_PROTECTION_LIMIT.get();
+        protectionLimit = PROTECTION_LIMIT.get();
     }
 }
-

@@ -1,19 +1,21 @@
 package com.crabmods.tameable_arachne.entity;
 
-import com.crabmods.tameable_arachne.TameableArachneMod;
+import java.text.NumberFormat;
+
 import com.crabmods.tameable_arachne.TameableArachneConfig;
 import com.crabmods.tameable_arachne.entity.ai.EntityAIFollowArachneOwner;
 import com.crabmods.tameable_arachne.item.ItemMagicCandy;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Mth;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -25,14 +27,18 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.monster.*;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.Ghast;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class EntityHarpy extends TamableAnimal {
     private static final EntityDataAccessor<Float> LAST_HEALTH = SynchedEntityData.defineId(EntityHarpy.class, EntityDataSerializers.FLOAT);
@@ -46,19 +52,24 @@ public class EntityHarpy extends TamableAnimal {
     private static final EntityDataAccessor<Integer> FALL_PROTO = SynchedEntityData.defineId(EntityHarpy.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> BLAST_PROTO = SynchedEntityData.defineId(EntityHarpy.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> PROJECTILE_PROTO = SynchedEntityData.defineId(EntityHarpy.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Byte> TAMED = SynchedEntityData.defineId(EntityHarpy.class, EntityDataSerializers.BYTE);
 
-    private float interestedAngle;
-    private float interestedAngleO;
+    public float interestedAngle;
+    public float interestedAngleO;
     private int attackTimer;
     private int randmTimer;
     private int winkTimer;
+    protected float knockbackFactor = 0.6F;
 
-    // Harpy specific fields for wing animation
+    // Wing animation fields - exactly like 1.12.2
+    public float oFlap;
+    public float flap;
+    public float oFlapSpeed;
+    public float flapSpeed;
     public float wingRotation;
     public float destPos;
-    public float wingRotationO;
-    public float wingRotationDelta;
-    public float wingFlapSpeed = 1.0F;
+    private float wingRotationDelta = 1.0F;
+    private float nextFlap;
 
     public EntityHarpy(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
@@ -68,15 +79,15 @@ public class EntityHarpy extends TamableAnimal {
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(Attributes.MAX_HEALTH, 20.0D)
-                .add(Attributes.ATTACK_DAMAGE, 2.0D);
+                .add(Attributes.MAX_HEALTH, 15.0D)
+                .add(Attributes.ATTACK_DAMAGE, 3.0D)
+                .add(Attributes.FLYING_SPEED, 0.4D);
     }
 
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
-        this.goalSelector.addGoal(3, new LeapAtTargetGoal(this, 0.4F));
         this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0D, true));
         this.goalSelector.addGoal(5, new EntityAIFollowArachneOwner(this, 1.0D, 10.0F, 2.0F));
         this.goalSelector.addGoal(6, new RandomStrollGoal(this, 1.0D));
@@ -93,7 +104,7 @@ public class EntityHarpy extends TamableAnimal {
         super.defineSynchedData();
         this.entityData.define(LAST_HEALTH, this.getHealth());
         this.entityData.define(FLAG, (byte) 0);
-        this.entityData.define(TYPE, this.random.nextInt(14)); // Harpy has 14 texture variants
+        this.entityData.define(TYPE, this.random.nextInt(14)); // Harpy has 14 texture variants (0-13)
         this.entityData.define(ADD_HP, 0);
         this.entityData.define(ADD_ATTACK, 0);
         this.entityData.define(ADD_DEFENSE, 0);
@@ -102,6 +113,7 @@ public class EntityHarpy extends TamableAnimal {
         this.entityData.define(FALL_PROTO, 0);
         this.entityData.define(BLAST_PROTO, 0);
         this.entityData.define(PROJECTILE_PROTO, 0);
+        this.entityData.define(TAMED, (byte) 0);
     }
 
     @Override
@@ -151,14 +163,7 @@ public class EntityHarpy extends TamableAnimal {
 
     @Override
     protected void playStepSound(BlockPos pos, BlockState blockState) {
-        SoundType soundtype = blockState.getSoundType();
-        
-        if (this.level().getBlockState(pos.above()).getBlock() == Blocks.SNOW) {
-            soundtype = Blocks.SNOW.getSoundType(Blocks.SNOW.defaultBlockState(), level(), pos, this);
-            this.playSound(soundtype.getStepSound(), soundtype.getVolume() * 0.15F, soundtype.getPitch());
-        } else if (!blockState.getFluidState().isEmpty()) {
-            this.playSound(soundtype.getStepSound(), soundtype.getVolume() * 0.15F, soundtype.getPitch());
-        }
+        this.playSound(SoundEvents.SPIDER_STEP, 0.15F, 1.0F);
     }
 
     @Override
@@ -169,6 +174,31 @@ public class EntityHarpy extends TamableAnimal {
             --this.attackTimer;
         }
 
+        // Wing flapping animation - exactly like 1.12.2
+        this.oFlapSpeed = this.flapSpeed;
+        this.oFlap = this.flap;
+        this.destPos = this.destPos + this.wingRotationDelta * 2.0F;
+
+        if (this.destPos > 1.0F) {
+            this.wingRotationDelta = -1.0F;
+        }
+
+        if (this.destPos < -1.0F) {
+            this.wingRotationDelta = 1.0F;
+        }
+
+        if (this.destPos > 0.0F) {
+            this.destPos = this.destPos + this.wingRotationDelta * this.wingRotationDelta * this.wingRotationDelta * 0.2F;
+        }
+
+        this.flapSpeed = this.destPos >= 0.0F ? this.destPos : 0.0F;
+
+        if (!this.onGround() && this.getDeltaMovement().y < 0.0D) {
+            this.setDeltaMovement(this.getDeltaMovement().multiply(1.0D, 0.6D, 1.0D));
+        }
+
+        this.flap += this.flapSpeed * 2.0F;
+
         // Auto heal functionality
         if (TameableArachneConfig.autoHeal) {
             if (this.tickCount % TameableArachneConfig.autoHealInterval == 0) {
@@ -178,7 +208,7 @@ public class EntityHarpy extends TamableAnimal {
             }
         }
 
-        // Wink animation
+        // Wink animation - exactly like 1.12.2
         if (this.winkTimer > 0) {
             --this.winkTimer;
             if (this.winkTimer == 0) {
@@ -203,40 +233,43 @@ public class EntityHarpy extends TamableAnimal {
     public void tick() {
         super.tick();
         
+        // Interested angle animation - exactly like 1.12.2
         this.interestedAngleO = this.interestedAngle;
         if (this.isAngry()) {
             this.interestedAngle += (1.0F - this.interestedAngle) * 0.4F;
         } else {
             this.interestedAngle += (0.0F - this.interestedAngle) * 0.4F;
         }
+    }
 
-        // Wing animation
-        this.wingRotationO = this.wingRotation;
-        this.wingRotationDelta = this.destPos - this.wingRotation;
-        
-        if (this.wingRotationDelta > 1.0F) {
-            this.wingRotationDelta = 1.0F;
-        }
-        
-        if (this.wingRotationDelta < -1.0F) {
-            this.wingRotationDelta = -1.0F;
-        }
-        
-        this.wingRotation += this.wingRotationDelta;
-        
-        if (this.wingRotation > 1.0F) {
-            this.wingRotation = 1.0F;
-        }
-        
-        if (this.wingRotation < -1.0F) {
-            this.wingRotation = -1.0F;
-        }
-        
-        if (this.wingRotationDelta > 0.0F) {
-            this.wingRotation = this.wingRotation + this.wingRotationDelta * 2.0F;
-        }
-        
-        this.destPos += this.wingFlapSpeed * 2.0F;
+    @Override
+    public float getEyeHeight(Pose pose) {
+        return this.getBbHeight() * 0.9F;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public float getInterestedAngle(float partialTick) {
+        return (this.interestedAngleO + (this.interestedAngle - this.interestedAngleO) * partialTick) * 0.15F * (float) Math.PI;
+    }
+
+    @Override
+    public int getMaxHeadXRot() {
+        return this.isInSittingPose() ? 20 : super.getMaxHeadXRot();
+    }
+
+    @Override
+    protected boolean isFlapping() {
+        return this.flyDist > this.nextFlap;
+    }
+
+    @Override
+    protected void onFlap() {
+        this.nextFlap = this.flyDist + this.flapSpeed / 2.0F;
+    }
+
+    @Override
+    public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource damageSource) {
+        return false; // Harpy doesn't take fall damage
     }
 
     @Override
@@ -245,20 +278,20 @@ public class EntityHarpy extends TamableAnimal {
             return false;
         }
 
-        // Apply protection
+        // Apply protection - exactly like 1.12.2
         if (damage >= 1.0F && getProtection() > 0) {
             damage = damage * ((100F - getProtection()) / 100F);
         }
-        if (damageSource.is(net.minecraft.tags.DamageTypeTags.IS_FIRE) && damage >= 1.0F && getFireProtection() > 0) {
+        if (damageSource.is(DamageTypeTags.IS_FIRE) && damage >= 1.0F && getFireProtection() > 0) {
             damage = damage * ((100F - getFireProtection()) / 100F);
         }
-        if (damageSource.is(net.minecraft.tags.DamageTypeTags.IS_FALL) && damage >= 1.0F && getFallProtection() > 0) {
+        if (damageSource.is(DamageTypeTags.IS_FALL) && damage >= 1.0F && getFallProtection() > 0) {
             damage = damage * ((100F - getFallProtection()) / 100F);
         }
-        if (damageSource.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION) && damage >= 1.0F && getBlastProtection() > 0) {
+        if (damageSource.is(DamageTypeTags.IS_EXPLOSION) && damage >= 1.0F && getBlastProtection() > 0) {
             damage = damage * ((100F - getBlastProtection()) / 100F);
         }
-        if (damageSource.is(net.minecraft.tags.DamageTypeTags.IS_PROJECTILE) && damage >= 1.0F && getProjectileProtection() > 0) {
+        if (damageSource.is(DamageTypeTags.IS_PROJECTILE) && damage >= 1.0F && getProjectileProtection() > 0) {
             damage = damage * ((100F - getProjectileProtection()) / 100F);
         }
 
@@ -271,7 +304,7 @@ public class EntityHarpy extends TamableAnimal {
             this.setOrderedToSit(false);
         }
 
-        if (entity != null && !(entity instanceof Player)) {
+        if (entity != null && !(entity instanceof Player) && !(entity instanceof AbstractArrow)) {
             damage = (damage + 1.0F) / 2.0F;
         }
 
@@ -283,67 +316,8 @@ public class EntityHarpy extends TamableAnimal {
         this.attackTimer = 12;
         this.level().broadcastEntityEvent(this, (byte) 4);
         
-        // Special drop mechanic for Harpy
-        try {
-            if (this.random.nextInt(100) < 10) { // 10% chance for special drops
-                ItemStack dropItem = this.getEntityDropItem(target);
-                if (dropItem != null) {
-                    target.spawnAtLocation(dropItem, target.getBbHeight() / 2F);
-                }
-            }
-        } catch (Exception e) {
-            // Ignore exceptions
-        }
-        
         int attackValue = this.getAttackValue();
         return target.hurt(this.damageSources().mobAttack(this), attackValue);
-    }
-
-    private ItemStack getEntityDropItem(Entity entity) {
-        ItemStack itemStack = null;
-        
-        if (entity instanceof LivingEntity) {
-            // Animals
-            if (entity instanceof net.minecraft.world.entity.animal.Chicken) {
-                itemStack = new ItemStack(Items.FEATHER, 1);
-            } else if (entity instanceof net.minecraft.world.entity.animal.Cow) {
-                itemStack = new ItemStack(Items.LEATHER, 1);
-            } else if (entity instanceof net.minecraft.world.entity.animal.Pig) {
-                itemStack = new ItemStack(entity.isOnFire() ? Items.COOKED_PORKCHOP : Items.PORKCHOP, 1);
-            } else if (entity instanceof net.minecraft.world.entity.animal.Sheep) {
-                itemStack = new ItemStack(Blocks.WHITE_WOOL, 1);
-            } else if (entity instanceof net.minecraft.world.entity.animal.Wolf) {
-                itemStack = new ItemStack(Items.LEATHER, 1);
-            } else if (entity instanceof net.minecraft.world.entity.animal.Squid) {
-                itemStack = new ItemStack(Items.INK_SAC, 1);
-            }
-            // Monsters
-            else if (entity instanceof Blaze) {
-                itemStack = new ItemStack(Items.BLAZE_ROD, 1);
-            } else if (entity instanceof Creeper) {
-                itemStack = new ItemStack(Items.GUNPOWDER, 1);
-            } else if (entity instanceof EnderMan) {
-                itemStack = new ItemStack(Items.ENDER_PEARL, 1);
-            } else if (entity instanceof AbstractSkeleton) {
-                itemStack = new ItemStack(Items.BONE, 1);
-            } else if (entity instanceof Spider) {
-                itemStack = new ItemStack(Items.STRING, 1);
-            } else if (entity instanceof Zombie) {
-                itemStack = new ItemStack(Items.ROTTEN_FLESH, 1);
-            } else if (entity instanceof Ghast) {
-                itemStack = new ItemStack(Items.GUNPOWDER, 1);
-            } else if (entity instanceof Slime) {
-                itemStack = new ItemStack(Items.SLIME_BALL, 1);
-            }
-            // Mod entities
-            else if (entity instanceof EntityArachne || entity instanceof EntityArachneMedium) {
-                itemStack = new ItemStack(Items.STRING, 1);
-            } else if (entity instanceof EntityHarpy) {
-                itemStack = new ItemStack(Items.FEATHER, 1);
-            }
-        }
-        
-        return itemStack;
     }
 
     @Override
@@ -359,23 +333,130 @@ public class EntityHarpy extends TamableAnimal {
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
 
-        if (this.isTame()) {
-            if (itemstack.getItem() instanceof ItemMagicCandy) {
+        // Magic Candy interaction - exactly like 1.12.2
+        if (!itemstack.isEmpty() && itemstack.getItem() instanceof ItemMagicCandy) {
+            if (!this.isTame() || (this.isTame() && this.isOwnedBy(player))) {
                 if (!player.getAbilities().instabuild) {
                     itemstack.shrink(1);
                 }
-                
-                // Apply magic candy effects - change texture
-                this.magicCandyThing();
-                
-                this.setAddHp(this.getAddHp() + 1);
-                this.setAddAttack(this.getAddAttack() + 1);
-                this.setAddDefense(this.getAddDefense() + 1);
-                
-                this.heal(this.getMaxHealth());
+
+                if (!this.level().isClientSide) {
+                    this.magicCandyThing();
+                }
+
                 return InteractionResult.SUCCESS;
             }
-            
+        }
+
+        if (this.isTame()) {
+            // Power-up items - exactly like 1.12.2
+            if (this.isOwnedBy(player) && this.canPowerUp()) {
+                if (itemstack.is(Items.GOLD_INGOT)) {
+                    if (!player.getAbilities().instabuild) {
+                        itemstack.shrink(1);
+                    }
+                    this.setAddHp(this.getAddHp() + 1);
+                    this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(this.getHpValue());
+                    return InteractionResult.SUCCESS;
+                }
+
+                if (itemstack.is(Items.DIAMOND)) {
+                    if (!player.getAbilities().instabuild) {
+                        itemstack.shrink(1);
+                    }
+                    this.setAddAttack(this.getAddAttack() + 1);
+                    return InteractionResult.SUCCESS;
+                }
+
+                if (itemstack.is(Items.IRON_INGOT)) {
+                    if (!player.getAbilities().instabuild) {
+                        itemstack.shrink(1);
+                    }
+                    this.setAddDefense(this.getAddDefense() + 1);
+                    return InteractionResult.SUCCESS;
+                }
+            }
+
+            // Enchanted item protection transfer - same as EntityArachne
+            if (this.isOwnedBy(player) && itemstack.isEnchanted()) {
+                boolean update = false;
+
+                // Check for protection enchantments
+                if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.ALL_DAMAGE_PROTECTION, itemstack) > 0) {
+                    int level = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.ALL_DAMAGE_PROTECTION, itemstack);
+                    if (canUpFireProtection()) {
+                        int temp = getFireProtection() + (2 * level);
+                        if (temp > TameableArachneConfig.fireProtectionLimit) {
+                            temp = TameableArachneConfig.fireProtectionLimit;
+                        }
+                        setFireProtection(temp);
+                        update = true;
+                    }
+                    // Apply to all protection types for "Protection" enchantment
+                    if (canUpFallProtection()) {
+                        int temp = getFallProtection() + (2 * level);
+                        if (temp > TameableArachneConfig.fallProtectionLimit) {
+                            temp = TameableArachneConfig.fallProtectionLimit;
+                        }
+                        setFallProtection(temp);
+                        update = true;
+                    }
+                    if (canUpBlastProtection()) {
+                        int temp = getBlastProtection() + (2 * level);
+                        if (temp > TameableArachneConfig.blastProtectionLimit) {
+                            temp = TameableArachneConfig.blastProtectionLimit;
+                        }
+                        setBlastProtection(temp);
+                        update = true;
+                    }
+                    if (canUpProjectileProtection()) {
+                        int temp = getProjectileProtection() + (2 * level);
+                        if (temp > TameableArachneConfig.projectileProtectionLimit) {
+                            temp = TameableArachneConfig.projectileProtectionLimit;
+                        }
+                        setProjectileProtection(temp);
+                        update = true;
+                    }
+                }
+
+                if (update) {
+                    if (!player.getAbilities().instabuild) {
+                        itemstack.removeTagKey("Enchantments");
+                    }
+                    return InteractionResult.SUCCESS;
+                }
+            }
+
+            // Book info display - exactly like 1.12.2
+            if (itemstack.is(Items.BOOK)) {
+                if (this.level().isClientSide) {
+                    NumberFormat format = NumberFormat.getInstance();
+                    format.setMaximumFractionDigits(1);
+                    float hp = this.entityData.get(LAST_HEALTH) / 2F;
+                    float maxHp = getHpValue() / 2F;
+                    float attack = getAttackValue() / 2F;
+                    float defense = getDefenseValue() / 2F;
+                    int powerups = this.getAddHp() + this.getAddAttack() + this.getAddDefense();
+
+                    player.sendSystemMessage(Component.literal("HP:" + format.format(hp) + "/" + format.format(maxHp) + " Attack:" + format.format(attack) + " Defense:" + format.format(defense) + " PowerUp:" + powerups));
+                    player.sendSystemMessage(Component.literal("Protections Fire:" + getFireProtection() + " Fall:" + getFallProtection() + " Blast:" + getBlastProtection() + " Projectile:" + getProjectileProtection()));
+                }
+                return InteractionResult.SUCCESS;
+            }
+
+            // Bread healing - exactly like 1.12.2 (Harpy uses bread instead of chicken)
+            if (itemstack.is(Items.BREAD)) {
+                if (this.entityData.get(LAST_HEALTH) < this.getHpValue()) {
+                    if (!player.getAbilities().instabuild) {
+                        itemstack.shrink(1);
+                    }
+                    float healValue = this.getHpValue() / 2;
+                    this.heal(healValue);
+                    return InteractionResult.SUCCESS;
+                }
+            }
+
+            // Sit/stand toggle
             if (this.isOwnedBy(player) && !this.level().isClientSide && !this.isFood(itemstack)) {
                 this.setOrderedToSit(!this.isOrderedToSit());
                 this.jumping = false;
@@ -383,7 +464,8 @@ public class EntityHarpy extends TamableAnimal {
                 this.setTarget(null);
                 return InteractionResult.SUCCESS;
             }
-        } else if (itemstack.is(Items.SPIDER_EYE)) {
+        } else if (!itemstack.isEmpty() && itemstack.is(Items.BREAD) && !this.isAngry()) {
+            // Taming with bread - exactly like 1.12.2
             if (!player.getAbilities().instabuild) {
                 itemstack.shrink(1);
             }
@@ -394,6 +476,7 @@ public class EntityHarpy extends TamableAnimal {
                     this.navigation.stop();
                     this.setTarget(null);
                     this.setOrderedToSit(true);
+                    this.setHealth(this.getHpValue());
                     this.level().broadcastEntityEvent(this, (byte) 7);
                 } else {
                     this.level().broadcastEntityEvent(this, (byte) 6);
@@ -407,13 +490,37 @@ public class EntityHarpy extends TamableAnimal {
     }
 
     protected void magicCandyThing() {
-        int texture = this.getArachneType() + 1;
-        this.setArachneType(texture > 13 ? 0 : texture);
+        // Harpy has 14 texture variants (0-13)
+        int newType = this.random.nextInt(14);
+        this.setArachneType(newType);
     }
 
     @Override
-    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource damageSource) {
-        return false; // Harpy doesn't take fall damage
+    public boolean isFood(ItemStack stack) {
+        return false;
+    }
+
+    @Override
+    public int getMaxSpawnClusterSize() {
+        return 6;
+    }
+
+    public boolean isAngry() {
+        return (this.entityData.get(TAMED) & 2) != 0;
+    }
+
+    public void setAngry(boolean angry) {
+        byte b0 = this.entityData.get(TAMED);
+        if (angry) {
+            this.entityData.set(TAMED, (byte) (b0 | 2));
+        } else {
+            this.entityData.set(TAMED, (byte) (b0 & -3));
+        }
+    }
+
+    @Override
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        return null;
     }
 
     @Override
@@ -431,29 +538,31 @@ public class EntityHarpy extends TamableAnimal {
     }
 
     @Override
-    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
-        return TameableArachneMod.HARPY.get().create(level);
-    }
-
-    @Override
     public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return !this.isTame() && this.tickCount > 24000;
     }
 
-    // Getters and setters for data
-    public boolean isAngry() {
-        return (this.entityData.get(FLAG) & 2) != 0;
-    }
-
-    public void setAngry(boolean angry) {
-        byte b0 = this.entityData.get(FLAG);
-        if (angry) {
-            this.entityData.set(FLAG, (byte)(b0 | 2));
+    public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
+        if (!(target instanceof Creeper) && !(target instanceof Ghast)) {
+            if (target instanceof EntityHarpy) {
+                EntityHarpy entityharpy = (EntityHarpy) target;
+                if (entityharpy.isTame() && entityharpy.getOwner() == owner) {
+                    return false;
+                }
+            }
+            return target instanceof Player && owner instanceof Player && !((Player) owner).canHarmPlayer((Player) target) ? false : true;
         } else {
-            this.entityData.set(FLAG, (byte)(b0 & -3));
+            return false;
         }
     }
 
+    @Override
+    public EntityDimensions getDimensions(Pose pose) {
+        // Harpy is smaller: 0.7F width, 1.2F height
+        return EntityDimensions.scalable(0.7F, 1.2F);
+    }
+
+    // Getters and setters - exactly like EntityArachne but with Harpy-specific values
     public int getArachneType() {
         return this.entityData.get(TYPE);
     }
@@ -466,66 +575,24 @@ public class EntityHarpy extends TamableAnimal {
         return this.entityData.get(ADD_HP);
     }
 
-    public void setAddHp(int hp) {
-        this.entityData.set(ADD_HP, hp);
-        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(this.getHpValue());
+    public void setAddHp(int par1) {
+        this.entityData.set(ADD_HP, par1);
     }
 
     public int getAddAttack() {
         return this.entityData.get(ADD_ATTACK);
     }
 
-    public void setAddAttack(int attack) {
-        this.entityData.set(ADD_ATTACK, attack);
-        this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(this.getAttackValue());
+    public void setAddAttack(int par1) {
+        this.entityData.set(ADD_ATTACK, par1);
     }
 
     public int getAddDefense() {
         return this.entityData.get(ADD_DEFENSE);
     }
 
-    public void setAddDefense(int defense) {
-        this.entityData.set(ADD_DEFENSE, defense);
-    }
-
-    public int getProtection() {
-        return this.entityData.get(PROTECTION);
-    }
-
-    public void setProtection(int protection) {
-        this.entityData.set(PROTECTION, protection);
-    }
-
-    public int getFireProtection() {
-        return this.entityData.get(FIRE_PROTO);
-    }
-
-    public void setFireProtection(int fireProtection) {
-        this.entityData.set(FIRE_PROTO, fireProtection);
-    }
-
-    public int getFallProtection() {
-        return this.entityData.get(FALL_PROTO);
-    }
-
-    public void setFallProtection(int fallProtection) {
-        this.entityData.set(FALL_PROTO, fallProtection);
-    }
-
-    public int getBlastProtection() {
-        return this.entityData.get(BLAST_PROTO);
-    }
-
-    public void setBlastProtection(int blastProtection) {
-        this.entityData.set(BLAST_PROTO, blastProtection);
-    }
-
-    public int getProjectileProtection() {
-        return this.entityData.get(PROJECTILE_PROTO);
-    }
-
-    public void setProjectileProtection(int projectileProtection) {
-        this.entityData.set(PROJECTILE_PROTO, projectileProtection);
+    public void setAddDefense(int par1) {
+        this.entityData.set(ADD_DEFENSE, par1);
     }
 
     public int getHpValue() {
@@ -549,29 +616,90 @@ public class EntityHarpy extends TamableAnimal {
         return TameableArachneConfig.harpyBaseDefense + (cnt * TameableArachneConfig.defenseUp);
     }
 
-    private boolean isNameBonus() {
-        return TameableArachneConfig.nameBonus && this.hasCustomName();
-    }
-
     public int getAttackTimer() {
         return this.attackTimer;
-    }
-
-    public void setAttackTimer(int timer) {
-        this.attackTimer = timer;
     }
 
     public int getWinkTimer() {
         return this.winkTimer;
     }
 
-    public float getInterestedAngle(float partialTicks) {
-        return (this.interestedAngleO + (this.interestedAngle - this.interestedAngleO) * partialTicks) * 0.15F * (float)Math.PI;
+    @Override
+    public int getArmorValue() {
+        return this.getDefenseValue();
     }
 
-    @Override
-    public int getMaxHeadXRot() {
-        return this.isInSittingPose() ? 20 : super.getMaxHeadXRot();
+    private boolean canPowerUp() {
+        int totalValue = this.getAddHp() + this.getAddAttack() + this.getAddDefense();
+        return totalValue < TameableArachneConfig.powerUpLimit;
+    }
+
+    private boolean isNameBonus() {
+        boolean ret = false;
+        if (TameableArachneConfig.nameBonus) {
+            try {
+                String customName = this.getName().getString();
+                if (customName != null && !customName.equals("")) {
+                    ret = true;
+                }
+            } catch (Exception e) {}
+        }
+        return ret;
+    }
+
+    public int getProtection() {
+        return this.entityData.get(PROTECTION);
+    }
+
+    public void setProtection(int par1) {
+        this.entityData.set(PROTECTION, par1);
+    }
+
+    public int getFireProtection() {
+        return this.entityData.get(FIRE_PROTO);
+    }
+
+    public void setFireProtection(int par1) {
+        this.entityData.set(FIRE_PROTO, par1);
+    }
+
+    public int getFallProtection() {
+        return this.entityData.get(FALL_PROTO);
+    }
+
+    public void setFallProtection(int par1) {
+        this.entityData.set(FALL_PROTO, par1);
+    }
+
+    public int getBlastProtection() {
+        return this.entityData.get(BLAST_PROTO);
+    }
+
+    public void setBlastProtection(int par1) {
+        this.entityData.set(BLAST_PROTO, par1);
+    }
+
+    public int getProjectileProtection() {
+        return this.entityData.get(PROJECTILE_PROTO);
+    }
+
+    public void setProjectileProtection(int par1) {
+        this.entityData.set(PROJECTILE_PROTO, par1);
+    }
+
+    private boolean canUpFireProtection() {
+        return getFireProtection() < TameableArachneConfig.fireProtectionLimit;
+    }
+
+    private boolean canUpFallProtection() {
+        return getFallProtection() < TameableArachneConfig.fallProtectionLimit;
+    }
+
+    private boolean canUpBlastProtection() {
+        return getBlastProtection() < TameableArachneConfig.blastProtectionLimit;
+    }
+
+    private boolean canUpProjectileProtection() {
+        return getProjectileProtection() < TameableArachneConfig.projectileProtectionLimit;
     }
 }
-
