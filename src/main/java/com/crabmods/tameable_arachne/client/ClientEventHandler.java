@@ -5,7 +5,7 @@ import com.crabmods.tameable_arachne.client.render.ModModelLayers;
 import com.crabmods.tameable_arachne.client.render.RenderArachne;
 import com.crabmods.tameable_arachne.client.render.RenderArachneMedium;
 import com.crabmods.tameable_arachne.client.render.RenderHarpy;
-import com.crabmods.tameable_arachne.model.ModelArachneDetailed;
+import com.crabmods.tameable_arachne.model.ModelArachne;
 import com.crabmods.tameable_arachne.model.ModelArachneMedium;
 import com.crabmods.tameable_arachne.model.ModelHarpy;
 
@@ -29,7 +29,7 @@ public class ClientEventHandler {
 
     @SubscribeEvent
     public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
-        event.registerLayerDefinition(ModModelLayers.ARACHNE_LAYER, ModelArachneDetailed::createBodyLayer);
+        event.registerLayerDefinition(ModModelLayers.ARACHNE_LAYER, ModelArachne::createBodyLayer);
         event.registerLayerDefinition(ModModelLayers.ARACHNE_MEDIUM_LAYER, ModelArachneMedium::createBodyLayer);
         event.registerLayerDefinition(ModModelLayers.HARPY_LAYER, ModelHarpy::createBodyLayer);
     }

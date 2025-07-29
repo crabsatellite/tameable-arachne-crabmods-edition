@@ -2,18 +2,18 @@ package com.crabmods.tameable_arachne.client.render;
 
 import com.crabmods.tameable_arachne.TameableArachneMod;
 import com.crabmods.tameable_arachne.entity.EntityArachne;
-import com.crabmods.tameable_arachne.model.ModelArachneDetailed;
+import com.crabmods.tameable_arachne.model.ModelArachne;
 
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
-public class RenderArachne extends MobRenderer<EntityArachne, ModelArachneDetailed<EntityArachne>> {
+public class RenderArachne extends MobRenderer<EntityArachne, ModelArachne<EntityArachne>> {
     private static final ResourceLocation ARACHNE_TEXTURE_WILD = ResourceLocation.fromNamespaceAndPath(TameableArachneMod.MODID, "textures/entity/arachne/arachne_00.png");
     private static final ResourceLocation ARACHNE_TEXTURE_TAME = ResourceLocation.fromNamespaceAndPath(TameableArachneMod.MODID, "textures/entity/arachne/arachne_tame_00.png");
 
     public RenderArachne(EntityRendererProvider.Context context) {
-        super(context, new ModelArachneDetailed<>(context.bakeLayer(ModModelLayers.ARACHNE_LAYER)), 0.8F);
+        super(context, new ModelArachne<>(context.bakeLayer(ModModelLayers.ARACHNE_LAYER)), 0.8F);
     }
 
     @Override

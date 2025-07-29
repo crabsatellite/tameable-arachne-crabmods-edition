@@ -1,7 +1,7 @@
 package com.crabmods.tameable_arachne.client.render;
 
 import com.crabmods.tameable_arachne.TameableArachneMod;
-import com.crabmods.tameable_arachne.model.ModelArachneDetailed;
+import com.crabmods.tameable_arachne.model.ModelArachne;
 import com.crabmods.tameable_arachne.model.ModelArachneMedium;
 import com.crabmods.tameable_arachne.model.ModelHarpy;
 
@@ -18,7 +18,7 @@ public class ModModelLayers {
             ResourceLocation.fromNamespaceAndPath(TameableArachneMod.MODID, "harpy"), "main");
 
     public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
-        event.registerLayerDefinition(ARACHNE_LAYER, ModelArachneDetailed::createBodyLayer);
+        event.registerLayerDefinition(ARACHNE_LAYER, ModelArachne::createBodyLayer);
         event.registerLayerDefinition(ARACHNE_MEDIUM_LAYER, ModelArachneMedium::createBodyLayer);
         event.registerLayerDefinition(HARPY_LAYER, ModelHarpy::createBodyLayer);
     }
