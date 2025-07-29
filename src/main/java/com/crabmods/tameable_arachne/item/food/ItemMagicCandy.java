@@ -1,4 +1,4 @@
-package com.crabmods.tameable_arachne.item;
+package com.crabmods.tameable_arachne.item.food;
 
 import com.crabmods.tameable_arachne.TameableArachneConfig;
 import com.crabmods.tameable_arachne.entity.EntityArachne;

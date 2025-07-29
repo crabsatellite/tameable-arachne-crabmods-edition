@@ -1,13 +1,10 @@
 package com.crabmods.tameable_arachne;
 
-import com.crabmods.tameable_arachne.client.ClientEventHandler;
 import com.crabmods.tameable_arachne.entity.EntityArachne;
 import com.crabmods.tameable_arachne.entity.EntityArachneMedium;
 import com.crabmods.tameable_arachne.entity.EntityHarpy;
-import com.crabmods.tameable_arachne.item.ItemMagicCandy;
+import com.crabmods.tameable_arachne.item.food.ItemMagicCandy;
 
-import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -15,7 +12,6 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.common.ForgeSpawnEggItem;
 import net.minecraftforge.common.MinecraftForge;

@@ -39,7 +39,7 @@ public class EntityAIRemoveEffectOfOwner extends Goal {
 
     @Override
     public void start() {
-        // Do nothing on start
+        // Nothing to do when starting
     }
 
     @Override
@@ -54,4 +54,3 @@ public class EntityAIRemoveEffectOfOwner extends Goal {
         }
     }
 }
-

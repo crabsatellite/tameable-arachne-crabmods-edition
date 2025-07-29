@@ -91,7 +91,7 @@ public class EntityAIFollowArachneOwner extends Goal {
     private void teleportToOwner() {
         BlockPos blockpos = this.owner.blockPosition();
 
-        for(int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 10; ++i) {
             int j = this.randomIntInclusive(-3, 3);
             int k = this.randomIntInclusive(-1, 1);
             int l = this.randomIntInclusive(-3, 3);

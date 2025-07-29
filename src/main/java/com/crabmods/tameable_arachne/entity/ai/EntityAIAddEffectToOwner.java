@@ -47,7 +47,7 @@ public class EntityAIAddEffectToOwner extends Goal {
 
     @Override
     public void start() {
-        // Do nothing on start
+        // Nothing to do when starting
     }
 
     @Override
@@ -60,4 +60,3 @@ public class EntityAIAddEffectToOwner extends Goal {
         this.theOwner.addEffect(new MobEffectInstance(this.effectId, this.effectTime, this.effectLevel));
     }
 }
-

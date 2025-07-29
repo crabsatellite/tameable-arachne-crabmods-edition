@@ -4,7 +4,7 @@ import java.text.NumberFormat;
 
 import com.crabmods.tameable_arachne.TameableArachneConfig;
 import com.crabmods.tameable_arachne.entity.ai.EntityAIFollowArachneOwner;
-import com.crabmods.tameable_arachne.item.ItemMagicCandy;
+import com.crabmods.tameable_arachne.item.food.ItemMagicCandy;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
