@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["PKP", "KDK", "PKP"],
+  "key": {
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "K": {
+      "item": "minecraft:bone_meal"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    }
+  },
+  "result": {
+    "item": "tameable_arachne:magic_candy",
+    "count": 8
+  }
+}

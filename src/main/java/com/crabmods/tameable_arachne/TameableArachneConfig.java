@@ -101,6 +101,11 @@ public class TameableArachneConfig {
             .comment("Auto heal interval in ticks")
             .defineInRange("autoHealInterval", 50, 10, 200);
 
+    // Recipe settings
+    private static final ForgeConfigSpec.BooleanValue CRAFT_SPAWN_EGG = BUILDER
+            .comment("Enable crafting spawn eggs")
+            .define("craftSpawnEgg", false);
+
     // Protection settings
     private static final ForgeConfigSpec.IntValue FIRE_PROTECTION_LIMIT = BUILDER
             .comment("Fire protection limit")
@@ -121,6 +126,19 @@ public class TameableArachneConfig {
     private static final ForgeConfigSpec.IntValue PROTECTION_LIMIT = BUILDER
             .comment("General protection limit")
             .defineInRange("protectionLimit", 4, 1, 10);
+
+    // Audio settings
+    private static final ForgeConfigSpec.IntValue ATTACK_SOUND_FREQUENCY = BUILDER
+            .comment("Attack sound frequency (play every N attacks)")
+            .defineInRange("attackSoundFrequency", 5, 1, 20);
+
+    private static final ForgeConfigSpec.IntValue HURT_SOUND_FREQUENCY = BUILDER
+            .comment("Hurt sound frequency (play every N hurt events)")
+            .defineInRange("hurtSoundFrequency", 5, 1, 20);
+
+    private static final ForgeConfigSpec.IntValue GREETING_SOUND_INTERVAL = BUILDER
+            .comment("Greeting sound interval in ticks (600 ticks = 30 seconds)")
+            .defineInRange("greetingSoundInterval", 600, 100, 2400);
 
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
@@ -151,12 +169,20 @@ public class TameableArachneConfig {
     public static int autoHealValue;
     public static int autoHealInterval;
 
+    // Recipe settings
+    public static boolean craftSpawnEgg;
+
     // Protection limits
     public static int fireProtectionLimit;
     public static int fallProtectionLimit;
     public static int blastProtectionLimit;
     public static int projectileProtectionLimit;
     public static int protectionLimit;
+
+    // Audio settings
+    public static int attackSoundFrequency;
+    public static int hurtSoundFrequency;
+    public static int greetingSoundInterval;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -186,11 +212,19 @@ public class TameableArachneConfig {
         autoHealValue = AUTO_HEAL_VALUE.get();
         autoHealInterval = AUTO_HEAL_INTERVAL.get();
 
+        // Recipe settings
+        craftSpawnEgg = CRAFT_SPAWN_EGG.get();
+
         // Protection limits
         fireProtectionLimit = FIRE_PROTECTION_LIMIT.get();
         fallProtectionLimit = FALL_PROTECTION_LIMIT.get();
         blastProtectionLimit = BLAST_PROTECTION_LIMIT.get();
         projectileProtectionLimit = PROJECTILE_PROTECTION_LIMIT.get();
         protectionLimit = PROTECTION_LIMIT.get();
+
+        // Audio settings
+        attackSoundFrequency = ATTACK_SOUND_FREQUENCY.get();
+        hurtSoundFrequency = HURT_SOUND_FREQUENCY.get();
+        greetingSoundInterval = GREETING_SOUND_INTERVAL.get();
     }
 }

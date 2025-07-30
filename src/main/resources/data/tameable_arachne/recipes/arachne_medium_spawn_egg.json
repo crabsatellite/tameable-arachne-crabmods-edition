@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["YSY", "SES", "YSY"],
+  "key": {
+    "S": {
+      "item": "minecraft:string"
+    },
+    "Y": {
+      "item": "minecraft:spider_eye"
+    },
+    "E": {
+      "item": "minecraft:egg"
+    }
+  },
+  "result": {
+    "item": "tameable_arachne:arachne_medium_spawn_egg",
+    "count": 1
+  }
+}

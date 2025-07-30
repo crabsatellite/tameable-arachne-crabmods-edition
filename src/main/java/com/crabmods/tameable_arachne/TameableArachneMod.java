@@ -4,6 +4,7 @@ import com.crabmods.tameable_arachne.entity.EntityArachne;
 import com.crabmods.tameable_arachne.entity.EntityArachneMedium;
 import com.crabmods.tameable_arachne.entity.EntityHarpy;
 import com.crabmods.tameable_arachne.item.food.ItemMagicCandy;
+import com.crabmods.tameable_arachne.item.EnchantedSpawnEggItem;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
@@ -57,15 +58,15 @@ public class TameableArachneMod {
     public static final RegistryObject<Item> MAGIC_CANDY = ITEMS.register("magic_candy",
             () -> new ItemMagicCandy(new Item.Properties().food(ItemMagicCandy.MAGIC_CANDY_FOOD)));
 
-    // Spawn Eggs
+    // Spawn Eggs with enchantment effects using official MC spawn egg colors
     public static final RegistryObject<Item> ARACHNE_SPAWN_EGG = ITEMS.register("arachne_spawn_egg",
-            () -> new ForgeSpawnEggItem(ARACHNE, 0x8B4513, 0x654321, new Item.Properties()));
+            () -> new EnchantedSpawnEggItem(ARACHNE, 0x342017, 0x8B4513, new Item.Properties(), "arachne")); // Based on spider spawn egg
     
     public static final RegistryObject<Item> ARACHNE_MEDIUM_SPAWN_EGG = ITEMS.register("arachne_medium_spawn_egg",
-            () -> new ForgeSpawnEggItem(ARACHNE_MEDIUM, 0x654321, 0x8B4513, new Item.Properties()));
+            () -> new EnchantedSpawnEggItem(ARACHNE_MEDIUM, 0x0C0C0C, 0x654321, new Item.Properties(), "arachne_medium")); // Based on cave spider spawn egg
     
     public static final RegistryObject<Item> HARPY_SPAWN_EGG = ITEMS.register("harpy_spawn_egg",
-            () -> new ForgeSpawnEggItem(HARPY, 0xFFB6C1, 0xFF69B4, new Item.Properties()));
+            () -> new EnchantedSpawnEggItem(HARPY, 0x0EA293, 0xF0F0F0, new Item.Properties(), "harpy")); // Based on parrot spawn egg colors
 
     public TameableArachneMod() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -73,6 +74,7 @@ public class TameableArachneMod {
         // Register deferred registers
         ENTITY_TYPES.register(modEventBus);
         ITEMS.register(modEventBus);
+        TameableArachneSounds.SOUND_EVENTS.register(modEventBus);
 
         // Register event handlers
         modEventBus.addListener(this::commonSetup);

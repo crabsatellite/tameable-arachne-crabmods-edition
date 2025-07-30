@@ -2,7 +2,22 @@
   "entity.tameable_arachne.arachne": "Arachne",
   "entity.tameable_arachne.arachne_medium": "Arachne Medium",
   "entity.tameable_arachne.harpy": "Harpy",
+
   "item.tameable_arachne.magic_candy": "Magic Candy",
+
+  "item.tameable_arachne.arachne_spawn_egg": "Arachne Spawn Egg",
+  "item.tameable_arachne.arachne_spawn_egg.tooltip1": "Web Weaver of the Dark Forest",
+  "item.tameable_arachne.arachne_spawn_egg.tooltip2": "Swift and stealthy spider companion",
+
+  "item.tameable_arachne.arachne_medium_spawn_egg": "Arachne Medium Spawn Egg",
+  "item.tameable_arachne.arachne_medium_spawn_egg.tooltip1": "Guardian of the Ancient Webs",
+  "item.tameable_arachne.arachne_medium_spawn_egg.tooltip2": "Larger, stronger spider with fierce loyalty",
+
+  "item.tameable_arachne.harpy_spawn_egg": "Harpy Spawn Egg",
+  "item.tameable_arachne.harpy_spawn_egg.tooltip1": "Song of the Sky Maiden",
+  "item.tameable_arachne.harpy_spawn_egg.tooltip2": "Graceful flying companion with ethereal beauty",
+
+  "item.tameable_arachne.spawn_egg.magical": "✦ Magical Essence ✦",
+
   "itemGroup.tameable_arachne": "Tameable Arachne"
 }
-

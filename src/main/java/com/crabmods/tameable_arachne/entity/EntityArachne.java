@@ -3,6 +3,7 @@ package com.crabmods.tameable_arachne.entity;
 import java.text.NumberFormat;
 
 import com.crabmods.tameable_arachne.TameableArachneConfig;
+import com.crabmods.tameable_arachne.TameableArachneSounds;
 import com.crabmods.tameable_arachne.entity.ai.EntityAIFollowArachneOwner;
 import com.crabmods.tameable_arachne.item.food.ItemMagicCandy;
 
@@ -62,6 +63,11 @@ public class EntityArachne extends TamableAnimal {
     private int winkTimer;
     protected float knockbackFactor = 0.6F;
 
+    // Audio system
+    private int attackSoundCounter = 0;
+    private int hurtSoundCounter = 0;
+    private int greetingSoundTimer = 0;
+
     public EntityArachne(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
         this.setTame(false);
@@ -120,6 +126,11 @@ public class EntityArachne extends TamableAnimal {
         tag.putInt("FallProtection", this.getFallProtection());
         tag.putInt("BlastProtection", this.getBlastProtection());
         tag.putInt("ProjectileProtection", this.getProjectileProtection());
+        
+        // Audio system data
+        tag.putInt("AttackSoundCounter", this.attackSoundCounter);
+        tag.putInt("HurtSoundCounter", this.hurtSoundCounter);
+        tag.putInt("GreetingSoundTimer", this.greetingSoundTimer);
     }
 
     @Override
@@ -135,6 +146,11 @@ public class EntityArachne extends TamableAnimal {
         this.setFallProtection(tag.getInt("FallProtection"));
         this.setBlastProtection(tag.getInt("BlastProtection"));
         this.setProjectileProtection(tag.getInt("ProjectileProtection"));
+        
+        // Audio system data
+        this.attackSoundCounter = tag.getInt("AttackSoundCounter");
+        this.hurtSoundCounter = tag.getInt("HurtSoundCounter");
+        this.greetingSoundTimer = tag.getInt("GreetingSoundTimer");
     }
 
     @Override
@@ -206,6 +222,18 @@ public class EntityArachne extends TamableAnimal {
         } else {
             this.interestedAngle += (0.0F - this.interestedAngle) * 0.4F;
         }
+
+        // Greeting sound timer - only when tamed and has owner nearby
+        if (this.isTame() && this.getOwner() != null && !this.level().isClientSide) {
+            Player owner = (Player) this.getOwner();
+            if (owner.distanceToSqr(this) <= 16.0D) { // Within 4 blocks
+                this.greetingSoundTimer++;
+                if (this.greetingSoundTimer >= TameableArachneConfig.greetingSoundInterval) {
+                    this.playSound(TameableArachneSounds.SHARED_GREETINGS.get(), 0.6F, 1.0F);
+                    this.greetingSoundTimer = 0;
+                }
+            }
+        }
     }
 
     @Override
@@ -259,6 +287,20 @@ public class EntityArachne extends TamableAnimal {
             damage = (damage + 1.0F) / 2.0F;
         }
 
+        // Play hurt sound based on frequency setting
+        if (damage >= 1.0F) {
+            this.hurtSoundCounter++;
+            if (this.hurtSoundCounter >= TameableArachneConfig.hurtSoundFrequency) {
+                // Choose sound based on entity type
+                if (this instanceof EntityArachneMedium) {
+                    this.playSound(TameableArachneSounds.ARACHNE_MEDIUM_HURT.get(), 1.0F, 1.0F);
+                } else {
+                    this.playSound(TameableArachneSounds.ARACHNE_HURT.get(), 1.0F, 1.0F);
+                }
+                this.hurtSoundCounter = 0;
+            }
+        }
+
         return super.hurt(damageSource, damage);
     }
 
@@ -266,6 +308,18 @@ public class EntityArachne extends TamableAnimal {
     public boolean doHurtTarget(Entity target) {
         this.attackTimer = 12;
         this.level().broadcastEntityEvent(this, (byte) 4);
+        
+        // Play attack sound based on frequency setting
+        this.attackSoundCounter++;
+        if (this.attackSoundCounter >= TameableArachneConfig.attackSoundFrequency) {
+            // Choose sound based on entity type
+            if (this instanceof EntityArachneMedium) {
+                this.playSound(TameableArachneSounds.ARACHNE_MEDIUM_ATTACK.get(), 1.0F, 1.0F);
+            } else {
+                this.playSound(TameableArachneSounds.ARACHNE_ATTACK.get(), 1.0F, 1.0F);
+            }
+            this.attackSoundCounter = 0;
+        }
         
         int attackValue = this.getAttackValue();
         return target.hurt(this.damageSources().mobAttack(this), attackValue);
