@@ -100,14 +100,13 @@ public class ModelHarpy<T extends Entity> extends EntityModel<T> {
                 .texOffs(0, 45).addBox(-3.5F, 9F, -2F, 7, 2, 4),
                 PartPose.offset(0F, -2F, 0F));
 
-        // Head attached to body1 like in 1.12.2
+        // Head attached to body1 like in 1.12.2 - fixed texture mapping
         PartDefinition head1 = body1.addOrReplaceChild("head1", CubeListBuilder.create()
-                .texOffs(0, 0).addBox(-4F, -8F, -4F, 8, 8, 8)
-                .texOffs(0, 16).addBox(-4F, 0F, -4F, 8, 8, 8)
-                .texOffs(32, 0).addBox(-4F, -8F, -4F, 8, 16, 8, new CubeDeformation(0.3F)),
+                .texOffs(0, 0).addBox(-4F, -8F, -4F, 8, 8, 8)  // Upper head
+                .texOffs(32, 0).addBox(-4F, -8F, -4F, 8, 8, 8, new CubeDeformation(0.5F)), // Hair/hat layer
                 PartPose.offset(0F, 0F, 0F));
 
-        // Face attached to head
+        // Face attached to head - simplified like standard player model
         head1.addOrReplaceChild("face", CubeListBuilder.create()
                 .texOffs(24, 0).addBox(-4F, -8F, -4.01F, 8, 8, 0),
                 PartPose.ZERO);
