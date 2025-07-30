@@ -236,18 +236,28 @@ public class ModelHarpy<T extends Entity> extends EntityModel<T> {
                 setRotation(rightarm4, 0F, 0F, 0F);
                 setRotation(leftarm4, 0F, 0F, 0F);
             }
-        }
 
-        // Wing animation when not sitting - exactly like 1.12.2
-        if (entity instanceof EntityHarpy entityharpy && !entityharpy.isInSittingPose()) {
-            this.rightarm0.xRot = Mth.cos(limbSwing * 0.7F + (float) Math.PI) * 1.2F * limbSwingAmount * 0.5F;
-            this.leftarm0.xRot = Mth.cos(limbSwing * 0.7F) * 1.2F * limbSwingAmount * 0.5F;
-            this.rightarm0.xRot += Mth.sin(ageInTicks * 0.07F) * 0.05F;
-            this.leftarm0.xRot -= Mth.sin(ageInTicks * 0.07F) * 0.05F;
+            // Wing animation when not sitting - like Minecraft chicken
+            if (!entityharpy.isInSittingPose()) {
+                this.rightarm0.xRot = Mth.cos(limbSwing * 0.7F + (float) Math.PI) * 1.2F * limbSwingAmount * 0.5F;
+                this.leftarm0.xRot = Mth.cos(limbSwing * 0.7F) * 1.2F * limbSwingAmount * 0.5F;
+                this.rightarm0.xRot += Mth.sin(ageInTicks * 0.07F) * 0.05F;
+                this.leftarm0.xRot -= Mth.sin(ageInTicks * 0.07F) * 0.05F;
 
-            // Wing flapping animation
-            this.rightarm0.zRot = ageInTicks;
-            this.leftarm0.zRot = -ageInTicks;
+                // Wing flapping animation - only when not on ground (like chicken)
+                if (!entityharpy.onGround()) {
+                    // Fast wing flapping when falling/flying with limited angle to prevent clipping
+                    float wingAngle = Mth.cos(ageInTicks * 1.2F) * 1.1F; // Increased amplitude
+                    // Ensure wings only extend outward, never inward toward body
+                    wingAngle = Math.abs(wingAngle); // Always positive to prevent inward folding
+                    this.rightarm0.zRot = wingAngle; // Right wing extends right
+                    this.leftarm0.zRot = -wingAngle; // Left wing extends left
+                } else {
+                    // Wings folded when on ground
+                    this.rightarm0.zRot = 0F;
+                    this.leftarm0.zRot = 0F;
+                }
+            }
         }
 
         // Leg walking animation - exactly like 1.12.2
@@ -263,20 +273,30 @@ public class ModelHarpy<T extends Entity> extends EntityModel<T> {
 
     @Override
     public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+        // Handle wink animation before rendering - exactly like 1.12.2
+        // This needs to be called here to match the 1.12.2 render method behavior
+
         // Scale down like in 1.12.2 (0.7x scale)
         poseStack.pushPose();
         poseStack.scale(0.7F, 0.7F, 0.7F);
         poseStack.translate(0.0F, 10.0F / 16.0F, 0.0F);
 
+        // Render the model - exactly like 1.12.2 where head1 and body1 are rendered separately
+        head1.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
         body1.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 
         poseStack.popPose();
     }
 
-    // Separate method for handling entity-specific rendering like wink animation
+    // Method to handle entity-specific rendering like wink animation - call before renderToBuffer
     public void prepareForRender(Entity entity) {
         if (entity instanceof EntityHarpy entityharpy) {
-            face.visible = entityharpy.getWinkTimer() <= 0;
+            // Handle wink animation exactly like 1.12.2
+            if (entityharpy.getWinkTimer() > 0) {
+                face.visible = false;
+            } else {
+                face.visible = true;
+            }
         }
     }
 }

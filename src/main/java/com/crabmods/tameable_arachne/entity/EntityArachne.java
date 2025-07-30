@@ -44,7 +44,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public class EntityArachne extends TamableAnimal {
     private static final EntityDataAccessor<Float> LAST_HEALTH = SynchedEntityData.defineId(EntityArachne.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Byte> FLAG = SynchedEntityData.defineId(EntityArachne.class, EntityDataSerializers.BYTE);
-    private static final EntityDataAccessor<Integer> TYPE = SynchedEntityData.defineId(EntityArachne.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> TYPE = SynchedEntityData.defineId(EntityArachne.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> ADD_HP = SynchedEntityData.defineId(EntityArachne.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> ADD_ATTACK = SynchedEntityData.defineId(EntityArachne.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> ADD_DEFENSE = SynchedEntityData.defineId(EntityArachne.class, EntityDataSerializers.INT);
@@ -599,6 +599,20 @@ public class EntityArachne extends TamableAnimal {
 
     public void setArachneType(int type) {
         this.entityData.set(TYPE, type);
+    }
+
+    // 1.12.2 compatibility methods
+    public int getTextureNo() {
+        return this.getArachneType();
+    }
+
+    public void setTextureNo(int type) {
+        this.setArachneType(type);
+    }
+
+    // 1.12.2 compatibility - func_70922_bv is "isAngry" check
+    public boolean func_70922_bv() {
+        return this.isAngry();
     }
 
     public int getAddHp() {

@@ -60,6 +60,10 @@ public class TameableArachneConfig {
             .comment("Base defense for Harpy")
             .defineInRange("harpyBaseDefense", 6, 0, 20);
 
+    private static final ForgeConfigSpec.IntValue HARPY_DROP_RATE = BUILDER
+            .comment("Harpy additional drop rate percentage")
+            .defineInRange("harpyDropRate", 10, 0, 100);
+
     // General settings
     private static final ForgeConfigSpec.IntValue HP_UP = BUILDER
             .comment("HP increase per level")
@@ -135,6 +139,7 @@ public class TameableArachneConfig {
     public static int harpyBaseHp;
     public static int harpyBaseAttack;
     public static int harpyBaseDefense;
+    public static int harpyDropRate;
 
     public static int hpUp;
     public static int attackUp;
@@ -169,6 +174,7 @@ public class TameableArachneConfig {
         harpyBaseHp = HARPY_BASE_HP.get();
         harpyBaseAttack = HARPY_BASE_ATTACK.get();
         harpyBaseDefense = HARPY_BASE_DEFENSE.get();
+        harpyDropRate = HARPY_DROP_RATE.get();
 
         hpUp = HP_UP.get();
         attackUp = ATTACK_UP.get();
