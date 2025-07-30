@@ -1,0 +1,52 @@
+{
+  "entity.arachne.attack": {
+    "subtitle": "Arachne attacks",
+    "sounds": [
+      {
+        "name": "tameable_arachne:entity/arachne/attack",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "entity.arachne.hurt": {
+    "subtitle": "Arachne hurts",
+    "sounds": [
+      {
+        "name": "tameable_arachne:entity/arachne/hurt",
+        "volume": 0.7,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "entity.arachne_medium.attack": {
+    "subtitle": "Arachne Medium attacks",
+    "sounds": [
+      {
+        "name": "tameable_arachne:entity/arachne_medium/attack",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "entity.arachne_medium.hurt": {
+    "subtitle": "Arachne Medium hurts",
+    "sounds": [
+      {
+        "name": "tameable_arachne:entity/arachne_medium/hurt",
+        "volume": 0.7,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "entity.shared.greetings": {
+    "subtitle": "Arachne greets",
+    "sounds": [
+      {
+        "name": "tameable_arachne:entity/shared/greetings",
+        "volume": 0.6,
+        "pitch": 1.0
+      }
+    ]
+  }
+}

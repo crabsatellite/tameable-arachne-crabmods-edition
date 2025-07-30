@@ -1,0 +1,23 @@
+{
+  "entity.tameable_arachne.arachne": "阿拉克尼",
+  "entity.tameable_arachne.arachne_medium": "中型阿拉克尼",
+  "entity.tameable_arachne.harpy": "哈比",
+
+  "item.tameable_arachne.magic_candy": "魔法糖果",
+
+  "item.tameable_arachne.arachne_spawn_egg": "阿拉克尼刷怪蛋",
+  "item.tameable_arachne.arachne_spawn_egg.tooltip1": "黑暗森林的织网者",
+  "item.tameable_arachne.arachne_spawn_egg.tooltip2": "敏捷隐秘的蜘蛛伙伴",
+
+  "item.tameable_arachne.arachne_medium_spawn_egg": "中型阿拉克尼刷怪蛋",
+  "item.tameable_arachne.arachne_medium_spawn_egg.tooltip1": "远古蛛网的守护者",
+  "item.tameable_arachne.arachne_medium_spawn_egg.tooltip2": "更大更强壮，无比忠诚的蜘蛛",
+
+  "item.tameable_arachne.harpy_spawn_egg": "哈比刷怪蛋",
+  "item.tameable_arachne.harpy_spawn_egg.tooltip1": "天空少女的歌声",
+  "item.tameable_arachne.harpy_spawn_egg.tooltip2": "优雅的飞行伙伴，拥有空灵之美",
+
+  "item.tameable_arachne.spawn_egg.magical": "✦ 魔法精华 ✦",
+
+  "itemGroup.tameable_arachne": "可驯服阿拉克尼"
+}
