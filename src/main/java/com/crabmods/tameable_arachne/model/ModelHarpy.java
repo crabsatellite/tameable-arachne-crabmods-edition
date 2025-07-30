@@ -53,7 +53,7 @@ public class ModelHarpy<T extends Entity> extends EntityModel<T> {
 
     public ModelHarpy(ModelPart root) {
         this.body1 = root.getChild("body1");
-        this.head1 = this.body1.getChild("head1");
+        this.head1 = root.getChild("head1");  // Head is direct child of root, not body1
         this.face = this.head1.getChild("face");
         this.tail = this.body1.getChild("tail");
         this.rightbreast = this.body1.getChild("rightbreast");
@@ -100,15 +100,16 @@ public class ModelHarpy<T extends Entity> extends EntityModel<T> {
                 .texOffs(0, 45).addBox(-3.5F, 9F, -2F, 7, 2, 4),
                 PartPose.offset(0F, -2F, 0F));
 
-        // Head attached to body1 like in 1.12.2 - fixed texture mapping
-        PartDefinition head1 = body1.addOrReplaceChild("head1", CubeListBuilder.create()
-                .texOffs(0, 0).addBox(-4F, -8F, -4F, 8, 8, 8)  // Upper head
-                .texOffs(32, 0).addBox(-4F, -8F, -4F, 8, 8, 8, new CubeDeformation(0.5F)), // Hair/hat layer
-                PartPose.offset(0F, 0F, 0F));
+        // Head as direct child of root - copying exact 1.12.2 head model structure and position
+        PartDefinition head1 = partdefinition.addOrReplaceChild("head1", CubeListBuilder.create()
+                .texOffs(0, 0).addBox(-4F, -8F, -4F, 8, 8, 8)     // Head upper part
+                .texOffs(0, 16).addBox(-4F, 0F, -4F, 8, 8, 8)     // Head lower part
+                .texOffs(32, 0).addBox(-4F, -8F, -4F, 8, 16, 8, CubeDeformation.NONE.extend(0.25F)), // Reduced hair layer expansion to minimize overlap
+                PartPose.offset(0F, -2F, 0F));  // Same position as in 1.12.2
 
-        // Face attached to head - simplified like standard player model
+        // Face attached to head - positioned clearly in front to avoid Z-fighting
         head1.addOrReplaceChild("face", CubeListBuilder.create()
-                .texOffs(24, 0).addBox(-4F, -8F, -4.01F, 8, 8, 0),
+                .texOffs(24, 0).addBox(-4F, -8F, -4.5F, 8, 8, 0),  // Moved further forward to avoid Z-fighting
                 PartPose.ZERO);
 
         // Tail attached to body1
